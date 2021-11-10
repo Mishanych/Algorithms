@@ -1,0 +1,16 @@
+D:\Learning\2 курс\Algorithms\laba3\Laba3\Laba3\bin\Debug\net5.0\Laba3.exe
+D:\Learning\2 курс\Algorithms\laba3\Laba3\Laba3\bin\Debug\net5.0\Laba3.deps.json
+D:\Learning\2 курс\Algorithms\laba3\Laba3\Laba3\bin\Debug\net5.0\Laba3.runtimeconfig.json
+D:\Learning\2 курс\Algorithms\laba3\Laba3\Laba3\bin\Debug\net5.0\Laba3.runtimeconfig.dev.json
+D:\Learning\2 курс\Algorithms\laba3\Laba3\Laba3\bin\Debug\net5.0\Laba3.dll
+D:\Learning\2 курс\Algorithms\laba3\Laba3\Laba3\bin\Debug\net5.0\ref\Laba3.dll
+D:\Learning\2 курс\Algorithms\laba3\Laba3\Laba3\bin\Debug\net5.0\Laba3.pdb
+D:\Learning\2 курс\Algorithms\laba3\Laba3\Laba3\obj\Debug\net5.0\Laba3.csproj.AssemblyReference.cache
+D:\Learning\2 курс\Algorithms\laba3\Laba3\Laba3\obj\Debug\net5.0\Laba3.GeneratedMSBuildEditorConfig.editorconfig
+D:\Learning\2 курс\Algorithms\laba3\Laba3\Laba3\obj\Debug\net5.0\Laba3.AssemblyInfoInputs.cache
+D:\Learning\2 курс\Algorithms\laba3\Laba3\Laba3\obj\Debug\net5.0\Laba3.AssemblyInfo.cs
+D:\Learning\2 курс\Algorithms\laba3\Laba3\Laba3\obj\Debug\net5.0\Laba3.csproj.CoreCompileInputs.cache
+D:\Learning\2 курс\Algorithms\laba3\Laba3\Laba3\obj\Debug\net5.0\Laba3.dll
+D:\Learning\2 курс\Algorithms\laba3\Laba3\Laba3\obj\Debug\net5.0\ref\Laba3.dll
+D:\Learning\2 курс\Algorithms\laba3\Laba3\Laba3\obj\Debug\net5.0\Laba3.pdb
+D:\Learning\2 курс\Algorithms\laba3\Laba3\Laba3\obj\Debug\net5.0\Laba3.genruntimeconfig.cache

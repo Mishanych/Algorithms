@@ -35,9 +35,9 @@ while not is_solvable:
 
 
 Puzzle.total_states = 0
-#puzzle = [1, 2, 4, 3, 0, 5, 7, 6, 8]
+puzzle = [1, 2, 4, 3, 0, 5, 7, 6, 8]
 #puzzle = [8,5,6,7,2,3,4,1,0]
-puzzle = [3,7,1,4,8,2,6,5,0]
+#puzzle = [3,7,1,4,8,2,6,5,0]
 for i in range(0, 9):
     if i % 3 == 0:
         print()
