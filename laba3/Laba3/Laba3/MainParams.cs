@@ -26,8 +26,6 @@ namespace Laba3
         public static float[] InitHormoneConcentrationOptions = new float[3] { 0.1f, 0.2f, 0.3f };
 
         public static int ShortestRouteLength = 0;
-        public static int RouteLength = int.MaxValue;
-        public static List<int> ShortestRoute = new List<int>();
 
         public const int COLONY_LIFETIME = 100;
     }

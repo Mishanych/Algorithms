@@ -5,34 +5,91 @@ namespace Lab2
 {
     class Program
     {
-        static unsafe void Main(string[] args)
+        static void Main(string[] args)
         {
+            BTree t = new BTree(100);
+
+            t.Insert(1, "v1");
+            t.Insert(3, "v3");
+            t.Insert(7, "v7");
+            t.Insert(10, "v10");
+            t.Insert(11, "v11");
+            t.Insert(13, "v13");
+            t.Insert(14, "v14");
+            t.Insert(15, "v15");
+            t.Insert(4, "v4");
+            t.Insert(5, "v5");
+            t.Insert(2, "v2");
+            t.Insert(12, "v12");
+            t.Insert(6, "v6");
+
+            Console.WriteLine("Traversal of tree constructed is");
+            t.Traverse();
+            Console.WriteLine();
+
+            t.Remove(6);
+            Console.WriteLine("Traversal of tree after removing 6");
+            t.Traverse();
+            Console.WriteLine();
+
+            t.Remove(13);
+            Console.WriteLine("Traversal of tree after removing 13");
+            t.Traverse();
+            Console.WriteLine();
+
+            t.Remove(7);
+            Console.WriteLine("Traversal of tree after removing 7");
+            t.Traverse();
+            Console.WriteLine();
+
+            t.Remove(4);
+            Console.WriteLine("Traversal of tree after removing 4");
+            t.Traverse();
+            Console.WriteLine();
+
+            t.Remove(2);
+            Console.WriteLine("Traversal of tree after removing 2");
+            t.Traverse();
+            Console.WriteLine();
+
+            t.Remove(16);
+            Console.WriteLine("Traversal of tree after removing 16");
+            t.Traverse();
+            Console.WriteLine();
+
+            int pkey = 15;
+            Console.WriteLine($"Search key {pkey}: value = {t.Search(pkey)}");
+
+            t.Change(15, "Hello world!");
+
+            Console.WriteLine("Traversal of tree after removing 16");
+            t.Traverse();
+            Console.WriteLine();
+            t.Save();
+            t.Load();
+            t.Traverse();
+            Console.WriteLine();
 
 
-            var tree = new Btree(3);
-
-            var insertArray = new[]
-                { 5, 7, 15, 40, 2, 1, 3, 10, 12, 80, 200, 500, 150, 90, 20, 50, 16, 14, 13, 9, 38, 89, 101, 102, 201, 202, 91, 88, 30, 18 };
-            foreach (var elem in insertArray)
-                tree.Insert(elem);
-
-            Console.WriteLine("Search(5): {0}", tree.Search(5));
-            Console.WriteLine("Search(999): {0}", tree.Search(999));
-            Console.WriteLine("FindMaxKey(): {0}", tree.FindMaxKey());
-
-            Console.WriteLine("Delete(5): {0}", tree.Delete(5));
-            Console.WriteLine("Search(5): {0}", tree.Search(5));
-
-            var deleteArray = new[]
-                { 15, 1, 80, 50, 14, 12, 500, 89, 90, 30, 150, 7, 13, 10, 16, 201, 102 };
-            foreach (var elem in deleteArray)
-                tree.Delete(elem);
-
-            Console.WriteLine("FindMaxKey(): {0}", tree.FindMaxKey());
-
-            tree.Print();
 
 
+
+
+
+
+
+            var rand = new Random();
+            Console.WriteLine("Added BTree (t=100). Search 10 random keys:");
+            for (int i = 0; i < 10000; i++)
+            {
+                t.Insert(i, "value_" + i);
+            }
+
+            for (int i = 0; i < 10; i++)
+            {
+                int k = rand.Next(10000);
+                Console.WriteLine("Search key " + k + " Founded value: " + t.Search(k) + " Amount of passed nodes: " + BTreeNode.AmountOfPassedNodes);
+            }
         }
 
     }

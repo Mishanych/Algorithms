@@ -47,6 +47,7 @@ namespace Laba3
             }
         }
        
+
         private static void GreedyAlgorithm(int[,] distances)
         {
             int sum = 0;

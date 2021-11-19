@@ -1,76 +1,152 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Lab2
 {
-    public class Btree
+    public class BTree
     {
-        public int T { get; }
-        public BtreeNode Root;
+        private BTreeNode _root;
+        private int _minPower;
 
-        public Btree(int t)
+
+        public BTree(int power)
         {
-            if (t <= 2)
-                throw new ArgumentException("BTree");
-
-            T = t;
-            Root = new BtreeNode(t, true);
+            this._root = null;
+            this._minPower = power;
         }
 
-        public void Insert(int key)
+        public void Traverse()
         {
-            var root = Root;
-
-            if (root.Length == 0)
-                root.InsertInOrder(key);
-            else if (root.Length == 2 * T - 1)
+            if (_root != null)
             {
-                var newNode = new BtreeNode(T);
-                newNode.Childrens[0] = root;
-                Root = newNode;
-                root.Parent = newNode;
+                _root.Traverse();
+            }
+        }
 
-                newNode.SplitChild(0);
-                newNode.InsertNonFull(key);
+
+        private BTreeNode SearchKey(int key)
+        {
+            BTreeNode.AmountOfPassedNodes = 0;
+            return _root == null ? null : _root.SearchNode(key);
+        }
+
+
+        public void Insert(int key, string value)
+        {
+
+            if (_root == null)
+            {
+                _root = new BTreeNode(_minPower, true);
+                _root.Keys[0].key = key;
+                _root.Keys[0].value = value;
+                _root.AmountOfKeys = 1;
             }
             else
-                root.InsertNonFull(key);
+            {
+                if (_root.AmountOfKeys == 2 * _minPower - 1)
+                {
+                    BTreeNode node = new BTreeNode(_minPower, false);
+
+                    node.Сhildren[0] = _root;
+                    node.SplitChild(0, _root);
+
+                    int i = 0;
+                    if (node.Keys[0].key < key)
+                    {
+                        i++;
+                    }
+
+                    node.Сhildren[i].InsertNotFull(key, value);
+
+                    _root = node;
+                }
+                else
+                {
+                    _root.InsertNotFull(key, value);
+                }
+            }
         }
 
-        public (BtreeNode node, int index) Search(int key) => Root.Search(key);
 
-        public (int? key, int? index) FindMaxKey() => Root.FindMaxKey();
-
-        public int? Delete(int key)
+        public void Remove(int key)
         {
-            // Tree is empty
-            if (Root.Length == 0)
-                return null;
+            if (_root == null)
+            {
+                Console.WriteLine("The tree is empty");
+                return;
+            }
 
-            var (node, index) = Search(key);
+            _root.Remove(key);
 
-            // Node not found
-            if (node == null)
-                return null;
-
-            node.Delete(index);
-
-            return key;
+            if (_root.AmountOfKeys == 0)
+            {
+                if (_root.isLeaf)
+                {
+                    _root = null;
+                }
+                else
+                {
+                    _root = _root.Сhildren[0];
+                } 
+            }
         }
 
-        public void Print()
-        {
-            Console.WriteLine("________________");
-            Console.WriteLine("Btree");
-            Console.WriteLine("t: {0}", T);
 
-            if (Root == null) return;
-            Console.WriteLine("\n________________");
-            Console.WriteLine("R O O T:");
-            Root.Print();
+        public string Search(int pkey)
+        {
+            BTreeNode.AmountOfPassedNodes = 0;
+
+            if (_root != null)
+            {
+                return _root.SearchValueByKey(pkey);
+            }
+            else
+            {
+                return "not found";
+            }
+
+        }
+        public void Change(int pkey, string val)
+        {
+            if (SearchKey(pkey) != null)
+            {
+                Remove(pkey);
+                Insert(pkey, val);
+                Console.WriteLine($"Changed key {pkey}: value = {Search(pkey)}");
+            }
+            else
+            {
+                Console.WriteLine($"key={pkey} not found! ");
+            }
+        }
+
+
+        public void Save()
+        {
+            if (_root != null)
+            {
+                string fname = "data.txt";
+                using (StreamWriter sw = new StreamWriter(fname, false, System.Text.Encoding.Default))
+                {
+                    sw.WriteLine(_root.TreeToString());
+                }
+            }
+        }
+        public void Load()
+        {
+            string fname = "data.txt";
+            string s = "";
+            using (StreamReader sr = new StreamReader(fname))
+            {
+                s = sr.ReadToEnd();
+                string[] dataS = s.Split("$");
+                _root = null;
+                for (int i = 0; i < dataS.Length - 1; i += 2) Insert(Int32.Parse(dataS[i]), dataS[i + 1]);
+            }
         }
     }
 }

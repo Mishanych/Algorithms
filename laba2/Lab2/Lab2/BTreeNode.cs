@@ -6,404 +6,471 @@ using System.Threading.Tasks;
 
 namespace Lab2
 {
-    public class BtreeNode
+    public class BTreeNode
     {
-        public BtreeNode Parent;
-        private int T { get; }
-        public int Length;
-        public readonly int?[] Keys;
-        public readonly BtreeNode[] Childrens;
-        public readonly bool IsLeaf;
-
-        public BtreeNode(int t)
+        public struct Data
         {
-            T = t;
-            Length = 0;
-            Keys = new int?[2 * t - 1];
-            Childrens = new BtreeNode[2 * t];
+            public int key;
+            public string value;
 
-            IsLeaf = false;
+        }
+        public Data[] Keys;
+        private int _minPower;
+        public BTreeNode[] Сhildren;
+        public int AmountOfKeys;
+        public bool isLeaf;
+        public static int AmountOfPassedNodes;
+
+
+        public BTreeNode(int power, bool isLeaf)
+        {
+
+            this._minPower = power;
+            this.isLeaf = isLeaf;
+            this.Keys = new Data[2 * this._minPower - 1];
+            this.Сhildren = new BTreeNode[2 * this._minPower];
+            this.AmountOfKeys = 0;
+
         }
 
-        public BtreeNode(int t, bool leaf)
+        
+        public int FindKey(int key)
         {
-            T = t;
-            Length = 0;
-            Keys = new int?[2 * t - 1];
-            Childrens = new BtreeNode[2 * t];
+            int index = 0;
 
-            IsLeaf = leaf;
+            while (index < AmountOfKeys && Keys[index].key < key)
+            {
+                index++;
+            }
+
+            return index;
         }
 
-        public int? GetFirstKey() => Length == 0 ? null : Keys[0];
 
-        public int? GetFirstKeyIndex() => Length == 0 ? null : 0;
-
-        public int? GetLastKey() => Length == 0 ? null : Keys[Length - 1];
-
-        public int? GetLastKeyIndex() => Length == 0 ? null : Length - 1;
-
-        public int? GetLastChildrenIndex()
+        public void Remove(int key)
         {
-            for (var i = Childrens.Length - 1; i >= 0; i--)
-                if (Childrens[i] != null)
-                    return i;
 
-            return null;
-        }
+            int index = FindKey(key);
 
-        public BtreeNode GetLastChildren()
-        {
-            for (var i = Childrens.Length - 1; i >= 0; i--)
-                if (Childrens[i] != null)
-                    return Childrens[i];
-
-            return null;
-        }
-
-        public int?[] GetHashCodeOfChildrens()
-        {
-            var result = new int?[2 * T];
-
-            for (var i = 0; i < 2 * T; i++)
-                if (Childrens[i] != null)
-                    result[i] = Childrens[i].GetHashCode();
-
-            return result;
-        }
-
-        public (int? key, int? index) FindMaxKey()
-        {
-            if (IsLeaf)
-                return (GetLastKey(), GetLastKeyIndex());
+            if (index < AmountOfKeys && Keys[index].key == key)
+            {
+                if (isLeaf)
+                {
+                    RemoveFromLeaf(index);
+                }
+                else
+                {
+                    RemoveFromNonLeaf(index);
+                }
+            }
             else
             {
-                return GetLastChildren().FindMaxKey();
+                if (isLeaf)
+                {
+                    Console.WriteLine($"The key {key} is does not exist in the tree");
+                    return;
+                }
+
+
+                bool keyExists = index == AmountOfKeys;
+
+                if (Сhildren[index].AmountOfKeys < _minPower)
+                {
+                    Fill(index);
+                }
+                
+                
+                if (keyExists && index > AmountOfKeys)
+                {
+                    Сhildren[index - 1].Remove(key);
+                }
+                else
+                {
+                    Сhildren[index].Remove(key);
+                }
             }
         }
 
-        public void InsertInOrder(int key)
+        public void RemoveFromLeaf(int index)
         {
-            if (Length == 0)
-                Keys[0] = key;
+
+            for (int i = index + 1; i < AmountOfKeys; i++)
+            {
+                Keys[i - 1] = Keys[i];
+            }
+
+            AmountOfKeys--;
+        }
+
+        public void RemoveFromNonLeaf(int index)
+        {
+
+            int key = Keys[index].key;
+
+
+            if (Сhildren[index].AmountOfKeys >= _minPower)
+            {
+                Data pred = GetPred(index);
+                Keys[index].key = pred.key;
+                Keys[index].value = pred.value;
+                Сhildren[index].Remove(pred.key);
+            }
+            else if (Сhildren[index + 1].AmountOfKeys >= _minPower)
+            {
+                Data succ = GetSucc(index);
+                Keys[index].key = succ.key;
+                Keys[index].value = succ.value;
+                Сhildren[index + 1].Remove(succ.key);
+            }
             else
             {
-                var i = Length - 1;
-                while (i >= 0 && key < Keys[i])
+                Merge(index);
+                Сhildren[index].Remove(key);
+            }
+        }
+
+        public Data GetPred(int idx)
+        { 
+            BTreeNode currNode = Сhildren[idx];
+            Data rez;
+
+            while (!currNode.isLeaf)
+            {
+                currNode = currNode.Сhildren[currNode.AmountOfKeys];
+            }
+
+
+            rez.key = currNode.Keys[currNode.AmountOfKeys - 1].key;
+            rez.value = currNode.Keys[currNode.AmountOfKeys - 1].value;
+
+            return rez;
+        }
+
+        public Data GetSucc(int idx)
+        { 
+            BTreeNode currNode = Сhildren[idx + 1];
+            Data rez;
+
+            while (!currNode.isLeaf)
+            {
+                currNode = currNode.Сhildren[0];
+            }
+
+
+            rez.key = currNode.Keys[0].key;
+            rez.value = currNode.Keys[0].value;
+            return rez;
+        }
+
+        public void Fill(int index)
+        {
+
+            if (index != 0 && Сhildren[index - 1].AmountOfKeys >= _minPower)
+            {
+                BorrowFromPrev(index);
+            }
+            else if (index != AmountOfKeys && Сhildren[index + 1].AmountOfKeys >= _minPower)
+            {
+                BorrowFromNext(index);
+            }
+            else
+            {
+                if (index != AmountOfKeys)
+                {
+                    Merge(index);
+                }
+                else
+                {
+                    Merge(index - 1);
+                }
+            }
+        }
+
+        private void BorrowFromPrev(int index)
+        {
+
+            BTreeNode child = Сhildren[index];
+            BTreeNode sibling = Сhildren[index - 1];
+
+            for (int i = child.AmountOfKeys - 1; i >= 0; i--)
+            {
+                child.Keys[i + 1] = child.Keys[i];
+            }
+
+            if (!child.isLeaf)
+            {
+                for (int i = child.AmountOfKeys; i >= 0; i--)
+                {
+                    child.Сhildren[i + 1] = child.Сhildren[i];
+                }
+            }
+
+            child.Keys[0] = Keys[index - 1];
+            if (!child.isLeaf) 
+            {
+                child.Сhildren[0] = sibling.Сhildren[sibling.AmountOfKeys];
+            }
+
+
+            Keys[index - 1] = sibling.Keys[sibling.AmountOfKeys - 1];
+            child.AmountOfKeys += 1;
+            sibling.AmountOfKeys -= 1;
+        }
+
+
+        private void BorrowFromNext(int index)
+        {
+
+            BTreeNode child = Сhildren[index];
+            BTreeNode sibling = Сhildren[index + 1];
+
+            child.Keys[child.AmountOfKeys] = Keys[index];
+
+            if (!child.isLeaf)
+            {
+                child.Сhildren[child.AmountOfKeys + 1] = sibling.Сhildren[0];
+            }
+
+            Keys[index] = sibling.Keys[0];
+
+            for (int i = 1; i < sibling.AmountOfKeys; i++)
+            {
+                sibling.Keys[i - 1] = sibling.Keys[i];
+            }
+
+            if (!sibling.isLeaf)
+            {
+                for (int i = 1; i <= sibling.AmountOfKeys; i++)
+                {
+                    sibling.Сhildren[i - 1] = sibling.Сhildren[i];
+                }
+            }
+            child.AmountOfKeys += 1;
+            sibling.AmountOfKeys -= 1;
+        }
+
+
+        private void Merge(int idx)
+        {
+
+            BTreeNode child = Сhildren[idx];
+            BTreeNode sibling = Сhildren[idx + 1];
+
+
+            child.Keys[_minPower - 1] = Keys[idx];
+
+
+            for (int i = 0; i < sibling.AmountOfKeys; i++)
+            {
+                child.Keys[i + _minPower] = sibling.Keys[i];
+            }
+
+
+            if (!child.isLeaf)
+            {
+                for (int i = 0; i <= sibling.AmountOfKeys; i++)
+                {
+                    child.Сhildren[i + _minPower] = sibling.Сhildren[i];
+                }
+            }
+
+
+            for (int i = idx + 1; i < AmountOfKeys; i++)
+            {
+                Keys[i - 1] = Keys[i];
+            }
+
+
+            for (int i = idx + 2; i <= AmountOfKeys; i++)
+            {
+                Сhildren[i - 1] = Сhildren[i];
+            }
+            
+            child.AmountOfKeys += sibling.AmountOfKeys + 1;
+            AmountOfKeys--;
+        }
+
+
+        public void InsertNotFull(int key, string value)
+        {
+
+            int i = AmountOfKeys - 1;
+
+            if (isLeaf)
+            {
+                while (i >= 0 && Keys[i].key > key)
                 {
                     Keys[i + 1] = Keys[i];
                     i--;
                 }
-
-                Keys[i + 1] = key;
+                Keys[i + 1].key = key;
+                Keys[i + 1].value = value;
+                AmountOfKeys = AmountOfKeys + 1;
             }
-
-            Length++;
-        }
-
-        public void InsertNonFull(int key)
-        {
-            if (IsLeaf)
-                InsertInOrder(key);
             else
             {
-                var i = Length - 1;
-
-                while (i >= 0 && Keys[i] > key)
+                while (i >= 0 && Keys[i].key > key)
+                {
                     i--;
+                }
 
-                i++;
 
-                if (Childrens[i].Length == 2 * T - 1)
+                if (Сhildren[i + 1].AmountOfKeys == 2 * _minPower - 1)
                 {
-                    SplitChild(i);
-
-                    if (key > Keys[i])
+                    SplitChild(i + 1, Сhildren[i + 1]);
+                    if (Keys[i + 1].key < key)
+                    {
                         i++;
+                    }
                 }
 
-                Childrens[i].InsertNonFull(key);
+
+                Сhildren[i + 1].InsertNotFull(key, value);
             }
         }
 
-        public void SplitChild(int index)
+
+        public void SplitChild(int index, BTreeNode node)
         {
-            var y = Childrens[index];
-            var z = new BtreeNode(T, y.IsLeaf)
-            {
-                Parent = y.Parent,
-                Length = T - 1
-            };
+            BTreeNode parentNode = new BTreeNode(node._minPower, node.isLeaf);
+            parentNode.AmountOfKeys = _minPower - 1;
 
-            y.Length = T - 1;
-
-            for (var j = 0; j < T - 1; j++)
+            for (int j = 0; j < _minPower - 1; j++)
             {
-                z.Keys[j] = y.Keys[j + T];
-                y.Keys[j + T] = null;
+                parentNode.Keys[j] = node.Keys[j + _minPower];
             }
 
-            if (!y.IsLeaf)
-                for (var j = 0; j < T; j++)
+
+            if (!node.isLeaf)
+            {
+                for (int j = 0; j < _minPower; j++)
                 {
-                    z.Childrens[j] = y.Childrens[j + T];
-                    y.Childrens[j + T] = null;
-
-                    z.Childrens[j].Parent = z;
+                    parentNode.Сhildren[j] = node.Сhildren[j + _minPower];
                 }
+            }
+            node.AmountOfKeys = _minPower - 1;
 
-            for (var j = Length - 1; j >= index; j--)
+            for (int j = AmountOfKeys; j >= index + 1; j--)
+            {
+                Сhildren[j + 1] = Сhildren[j];
+            }
+
+            Сhildren[index + 1] = parentNode;
+
+            for (int j = AmountOfKeys - 1; j >= index; j--)
+            {
                 Keys[j + 1] = Keys[j];
+            }
 
-            for (var j = Length; j >= index + 1; j--)
-                Childrens[j + 1] = Childrens[j];
 
-            Childrens[index + 1] = z;
-            Keys[index] = y.Keys[T - 1];
-            y.Keys[T - 1] = null;
-            Length++;
+            Keys[index] = node.Keys[_minPower - 1];
+
+            AmountOfKeys = AmountOfKeys + 1;
         }
 
-        public (BtreeNode node, int index) Search(int key)
+
+        public void Traverse()
         {
-            var i = 0;
-            while (i < Length && key > Keys[i])
+            int i;
+            for (i = 0; i < AmountOfKeys; i++)
+            {
+                if (!isLeaf)
+                {
+                    Сhildren[i].Traverse();
+                }
+
+                Console.Write($" {Keys[i].key}-{Keys[i].value}");
+            }
+
+            if (!isLeaf)
+            {
+                Сhildren[i].Traverse();
+            }
+        }
+
+        public string TreeToString()
+        {
+            string s = "";
+            int i;
+            for (i = 0; i < AmountOfKeys; i++)
+            {
+                if (!isLeaf)
+                {
+                    s += Сhildren[i].TreeToString();
+                }
+
+                s += Keys[i].key + "$" + Keys[i].value + "$";
+            }
+
+            if (!isLeaf)
+            {
+                s += Сhildren[i].TreeToString();
+            }
+            return s;
+        }
+
+
+        public BTreeNode SearchNode(int key)
+        {
+            int i = 0;
+            while (i < AmountOfKeys && key > Keys[i].key)
+            {
                 i++;
+            }
 
-            if (i < Length && key == Keys[i])
-                return (this, i);
+            if (Keys[i].key == key)
+            {
+                return this;
+            }
 
-            if (IsLeaf)
-                return (null, 0);
+            if (isLeaf)
+            {
+                return null;
+            }
 
-            return Childrens[i].Search(key);
+
+            return Сhildren[i].SearchNode(key);
         }
 
-        private void MargeTwoNodes(bool leftSibling, int thisNodeIndex)
+
+        public string SearchValueByKey(int key)
         {
-            var mergedNode = new BtreeNode(T, IsLeaf) { Parent = this.Parent };
-            BtreeNode siblingNode;
+            AmountOfPassedNodes++;
+            int left = -1;
+            int right = AmountOfKeys;
 
-            if (!leftSibling)
+
+            while (left < right - 1)
             {
-                InsertThisNode();
-
-                InsertParentKey();
-
-                InsertSibling();
-
-                Parent.Childrens[thisNodeIndex] = mergedNode;
-                MoveParentChildrens(thisNodeIndex + 1);
-            }
-            else
-            {
-                InsertSibling();
-
-                InsertParentKey();
-
-                InsertThisNode();
-
-                Parent.Childrens[thisNodeIndex - 1] = mergedNode;
-                MoveParentChildrens(thisNodeIndex);
-            }
-
-            void InsertThisNode()
-            {
-                var length = mergedNode.Length;
-                for (var i = 0; i < Length; i++)
+                int mid = (left + right) / 2;
+                if (Keys[mid].key < key)
                 {
-                    mergedNode.Keys[length + i] = Keys[i];
-                    Keys[i] = null;
-                    mergedNode.Length++;
-                }
-
-                for (var i = 0; i < GetLastChildrenIndex(); i++)
-                {
-                    mergedNode.Childrens[i] = Childrens[i];
-                    Childrens[i] = null;
-                }
-            }
-
-            void InsertSibling()
-            {
-                siblingNode = !leftSibling ? Parent.Childrens[thisNodeIndex + 1] : Parent.Childrens[thisNodeIndex - 1];
-
-                var length = mergedNode.Length;
-                for (var i = 0; i < siblingNode.Length; i++)
-                {
-                    mergedNode.Keys[length + i] = siblingNode.Keys[i];
-                    siblingNode.Keys[i] = null;
-                    mergedNode.Length++;
-                }
-
-                for (var i = 0; i < siblingNode.GetLastChildrenIndex(); i++)
-                {
-                    mergedNode.Childrens[length + i] = siblingNode.Childrens[i];
-                    siblingNode.Childrens[i] = null;
-                }
-            }
-
-            void InsertParentKey()
-            {
-                int index;
-                if (!leftSibling)
-                    index = thisNodeIndex;
-                else
-                    index = thisNodeIndex - 1;
-
-                mergedNode.Keys[mergedNode.Length] = Parent.Keys[index];
-
-                for (var i = index; i < 2 * T - 1; i++)
-                {
-                    if (Parent.Keys[i] == null)
-                        break;
-
-                    Parent.Keys[i] = Parent.Keys[i + 1];
-                }
-
-                mergedNode.Length++;
-            }
-
-            void MoveParentChildrens(int startIndex)
-            {
-                for (var i = startIndex; i < 2 * T - 1; i++)
-                    Parent.Childrens[i] = Parent.Childrens[i + 1];
-            }
-        }
-
-        public void Delete(int index)
-        {
-            DeletePhaseOne(index);
-
-            DeletePhaseTwo();
-        }
-
-        private int? DeletePhaseOne(int index)
-        {
-            return IsLeaf ? DeleteFromLeaf(index) : DeleteFromNoLeaf(index);
-        }
-
-        private int? DeleteFromLeaf(int index)
-        {
-            var temp = Keys[index];
-
-            for (var i = index; i < Length - 1; i++)
-                Keys[i] = Keys[i + 1];
-
-            Length--;
-
-            for (var i = Length; i < 2 * T - 1; i++)
-            {
-                if (Keys[i] == null)
-                    break;
-
-                Keys[i] = null;
-            }
-
-            return temp;
-        }
-
-        private int? DeleteFromNoLeaf(int index)
-        {
-            var temp = Keys[index];
-
-            var (key, _) = Childrens[index].FindMaxKey();
-            var (node, i) = Search(key ?? default(int));
-            Keys[index] = key;
-
-            node.Delete(i);
-
-            return temp;
-        }
-
-        private void DeletePhaseTwo()
-        {
-            if (Parent == null
-                || Length >= T - 1)
-                return;
-
-            var thisNodeIndex = Array.IndexOf(Parent.Childrens, this);
-
-            if (thisNodeIndex > 0
-                && Parent.Childrens[thisNodeIndex - 1].Length > T - 1)
-            {
-                MoveKeyOverParent(true);
-                return;
-            }
-            else if (thisNodeIndex < 2 * T
-              && Parent.Childrens[thisNodeIndex + 1] != null
-              && Parent.Childrens[thisNodeIndex + 1].Length > T - 1)
-            {
-                MoveKeyOverParent(false);
-                return;
-            }
-
-            if (thisNodeIndex >= 0 && thisNodeIndex < 2 * T
-                && Parent.Childrens[thisNodeIndex + 1] != null
-                && Parent.Childrens[thisNodeIndex + 1].Length >= T - 1)
-            {
-                MargeTwoNodes(false, thisNodeIndex);
-                Parent.DeletePhaseTwo();
-            }
-            else if (thisNodeIndex > 0 && thisNodeIndex <= 2 * T
-                && Parent.Childrens[thisNodeIndex - 1].Length >= T - 1)
-            {
-                MargeTwoNodes(true, thisNodeIndex);
-                Parent.DeletePhaseTwo();
-            }
-
-            void MoveKeyOverParent(bool leftSibling)
-            {
-                int siblingIndex;
-                int siblingKeyIndex;
-                int keyIndex;
-
-                if (leftSibling)
-                {
-                    siblingIndex = thisNodeIndex - 1;
-                    siblingKeyIndex = Parent.Childrens[siblingIndex].GetLastKeyIndex() ?? default(int);
-                    keyIndex = thisNodeIndex - 1;
+                    left = mid;
                 }
                 else
                 {
-                    siblingIndex = thisNodeIndex + 1;
-                    siblingKeyIndex = Parent.Childrens[siblingIndex].GetFirstKeyIndex() ?? default(int);
-                    keyIndex = thisNodeIndex;
+                    right = mid;
                 }
-
-                InsertInOrder(Parent.Keys[keyIndex] ?? default(int));
-
-                for (var i = GetLastChildrenIndex(); i < 2 * T - 1; i++)
-                    Childrens[(int)i] = Childrens[(int)i];
-
-                Childrens[0] = Parent.Childrens[siblingIndex].GetLastChildren();
-                Parent.Childrens[siblingIndex].Childrens[GetLastChildrenIndex() ?? default(int)] = null;
-
-                Parent.Keys[keyIndex] =
-                    Parent.Childrens[siblingIndex].DeletePhaseOne(siblingKeyIndex);
             }
-        }
 
-        public void Print()
-        {
-            Console.WriteLine("this: {0}", GetHashCode());
-            if (Parent != null)
-                Console.WriteLine("parent: {0}", Parent.GetHashCode());
-            Console.WriteLine("keys: [{0}]", String.Join(", ", Keys));
-            Console.WriteLine("childrens: [{0}]", String.Join(", ", GetHashCodeOfChildrens()));
-            Console.WriteLine("leaf: {0}", IsLeaf);
-            Console.WriteLine();
+            if (right < Keys.Length)
+            {
+                if (Keys[right].key == key)
+                {
+                    return Keys[right].value;
+                }
+            }
 
-            foreach (var children in Childrens)
-                children?.Print();
-        }
 
-        public void PrintRoot()
-        {
-            if (Parent == null)
-                Print();
+            if (isLeaf)
+            {
+                return key + " not found";
+            }
             else
-                Parent.PrintRoot();
+            {
+                return Сhildren[right].SearchValueByKey(key);
+            }
         }
     }
+
 }
